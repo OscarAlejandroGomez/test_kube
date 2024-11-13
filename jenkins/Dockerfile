@@ -8,7 +8,7 @@ RUN apt-get update -y && \
     rm -rf awscliv2.zip aws/ && \
     apt-get clean
 
-# Stage 2 - Copy AWS CLI to the Jenkins image and install Docker & kubectl
+# Stage 2 - Main Jenkins image setup
 FROM jenkins/jenkins:lts
 COPY --from=awscli-install /usr/local/aws-cli /usr/local/aws-cli
 ENV PATH="/usr/local/aws-cli/v2/current/bin:${PATH}"
@@ -20,7 +20,11 @@ RUN apt-get update && \
     curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin/kubectl && \
+    # Add Jenkins user to the docker group for socket access
+    groupadd -for docker && \
     usermod -aG docker jenkins && \
+    # Ensure Docker socket has correct permissions
+    chmod 666 /var/run/docker.sock && \
     apt-get clean
 
 USER jenkins
