@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
       - name: myapp
-        imagePullPolicy: Never
-        image: my_app
+        #imagePullPolicy: Never , esto se deja para cuando la imagen es local
+        image: 615299766065.dkr.ecr.us-east-1.amazonaws.com/demo_pipe:latest
         resources:
           limits:
             memory: "128Mi"
