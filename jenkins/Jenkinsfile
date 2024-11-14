@@ -6,6 +6,7 @@ pipeline {
         ECR_REPO = 'demo_pipe'
         AWS_ACCOUNT_ID = '615299766065'
         URL_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        CERTIFICADE_BASE64 = 'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCakNDQWU2Z0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRJME1URXhNVEUzTkRjME5sb1hEVE0wTVRFeE1ERTNORGMwTmxvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTUR1CnFUQkkxMTdIRHJJeE45dER0ekMrNkp1SkFSKzQzaDBCYU5jSUpYRHBselBweU9FaUkyTXVpc2dBQzFhblR2akgKY3htQWRyN0Q1QUlMRTV5WjBiNXpQSVdQdkhXUVRmNkgyWk5VWEVkMDQ1NXFlUEo1dUw0Z2RuTm1iK0ZVckFRaApNNTR6MjJVU04xTVAvNXVZRnJhZCtMK2hqS3F5aFNIcElBbSsyclczZCtkMmtuWEYxTjRYYk93ZE1hMWk3a1UxCjBlcFJ6TTNjUDhVU0xLN2JsUmpEaFlmRzJuY0QvdXVuWGtzNW9ycCswWFVlUnlwT1VCQ0I3cXM5YUpFaVVISEoKZzYxd2p6b1Z4RFpObENUdHpXQWhBYjF2ak1OSTVTUTgwRS9oWXZzWitkWHRQMjlrN3BlTVlYRFhzL05IdjVqaApwVWVVemYrZEpJV2tFMllSekVrQ0F3RUFBYU5oTUY4d0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQjBHQTFVZERnUVcKQkJRMlppVXRoUmhSOGZnV0Zkd2VnbjZNeFlBNWdqQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFtdE9JNk54ZApJREUwT1ZSMWZORHM3MU53VHpCeXdGczBuaXJmVitYYzhVOVZRWnlmRUx6RHBEc2V2TW5yRGZhakNFcllzYWRtClFkMXpXT1FWbCt1L0ozMHRqUGJCY0FySlFmU2FRWVZOcm5WckJWM2pRR3FoWFp4aEtLVXVWQnlMK3k5SGFqL3AKc0U5VnZSeDF5alVYOG9uL3ZRTFRic2t4eGtGRGZmQkhGUEx6K1NiMXlncDFiZ3JwMjR6TzlsZnBkbENvYlQxUQpoSGUxU2JpN0hKSWpiZlExb29kQmlmQVl1bXlBWmdhZ2hMdmRqRkoxTS9JaTMwdEtsT3pmRmxqOGY0dk5wNEE2CllRQkdsTmJTRis1TW1FVXRTL25LQXB6SUs5Q0VaT3ltVXc5MDlIQ0o3bGR1bTh6ZFRuVXFKUWVMOC9iSTEyYzYKRGN2TGNIMjNOT2g2WUE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=='
     }
     
     stages { 
@@ -38,8 +39,28 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps { 
-                kubeconfig(caCertificate: 'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCakNDQWU2Z0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRJME1URXhNVEUzTkRjME5sb1hEVE0wTVRFeE1ERTNORGMwTmxvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTUR1CnFUQkkxMTdIRHJJeE45dER0ekMrNkp1SkFSKzQzaDBCYU5jSUpYRHBselBweU9FaUkyTXVpc2dBQzFhblR2akgKY3htQWRyN0Q1QUlMRTV5WjBiNXpQSVdQdkhXUVRmNkgyWk5VWEVkMDQ1NXFlUEo1dUw0Z2RuTm1iK0ZVckFRaApNNTR6MjJVU04xTVAvNXVZRnJhZCtMK2hqS3F5aFNIcElBbSsyclczZCtkMmtuWEYxTjRYYk93ZE1hMWk3a1UxCjBlcFJ6TTNjUDhVU0xLN2JsUmpEaFlmRzJuY0QvdXVuWGtzNW9ycCswWFVlUnlwT1VCQ0I3cXM5YUpFaVVISEoKZzYxd2p6b1Z4RFpObENUdHpXQWhBYjF2ak1OSTVTUTgwRS9oWXZzWitkWHRQMjlrN3BlTVlYRFhzL05IdjVqaApwVWVVemYrZEpJV2tFMllSekVrQ0F3RUFBYU5oTUY4d0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQjBHQTFVZERnUVcKQkJRMlppVXRoUmhSOGZnV0Zkd2VnbjZNeFlBNWdqQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFtdE9JNk54ZApJREUwT1ZSMWZORHM3MU53VHpCeXdGczBuaXJmVitYYzhVOVZRWnlmRUx6RHBEc2V2TW5yRGZhakNFcllzYWRtClFkMXpXT1FWbCt1L0ozMHRqUGJCY0FySlFmU2FRWVZOcm5WckJWM2pRR3FoWFp4aEtLVXVWQnlMK3k5SGFqL3AKc0U5VnZSeDF5alVYOG9uL3ZRTFRic2t4eGtGRGZmQkhGUEx6K1NiMXlncDFiZ3JwMjR6TzlsZnBkbENvYlQxUQpoSGUxU2JpN0hKSWpiZlExb29kQmlmQVl1bXlBWmdhZ2hMdmRqRkoxTS9JaTMwdEtsT3pmRmxqOGY0dk5wNEE2CllRQkdsTmJTRis1TW1FVXRTL25LQXB6SUs5Q0VaT3ltVXc5MDlIQ0o3bGR1bTh6ZFRuVXFKUWVMOC9iSTEyYzYKRGN2TGNIMjNOT2g2WUE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==', credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.11:8090') {
-                    sh "kubectl apply -f ./k8/deployments/deployment.yaml"
+                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'ecr_user', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    kubeconfig(caCertificate: CERTIFICADE_BASE64, credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.11:8090') {
+                        script {
+                            // Retrieve AWS ECR password
+                            def ecrPassword = sh(returnStdout: true, script: "aws ecr get-login-password --region ${AWS_REGION}").trim()
+                            
+                            // Delete existing secret if it exists
+                            sh "kubectl delete secret ecr-secret || true"
+                            
+                            // Create the secret in Kubernetes
+                            sh """
+                                kubectl create secret docker-registry ecr-secret \
+                                --docker-server=${URL_REGISTRY} \
+                                --docker-username=AWS \
+                                --docker-password=${ecrPassword} \
+                                --docker-email=none
+                            """
+                            
+                            // Deploy application to Kubernetes
+                            sh "kubectl apply -f ./k8/deployments/deployment.yaml"
+                        }
+                    }
                 }
             }
         }
