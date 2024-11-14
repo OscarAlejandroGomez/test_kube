@@ -1,0 +1,12 @@
+# tests/deployment-health/00-assert.yaml
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - name: "Verify Deployment is available"
+    assert:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: myapp-deploymentt
+      namespace: default
+      status:
+        availableReplicas: 50  # Change to the number of replicas expected
