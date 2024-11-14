@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: myapp-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: myapp
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        #imagePullPolicy: Never , esto se deja para cuando la imagen es local
+        imagePullPolicy: Always
         image: 615299766065.dkr.ecr.us-east-1.amazonaws.com/demo_pipe:latest
         resources:
           limits:
