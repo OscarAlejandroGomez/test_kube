@@ -59,6 +59,7 @@ pipeline {
                             
                             // Deploy application to Kubernetes
                             sh "kubectl apply -f ./k8/deployments/deployment.yaml"
+                            sh "kubectl apply -f ./k8/services/service.yaml"
                         }
                     }
                 }
