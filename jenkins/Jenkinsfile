@@ -77,6 +77,25 @@ pipeline {
             }
         }
 
+
+        stage('test into kubernetes') {
+            steps { 
+                withCredentials([string(credentialsId: 'certificade-authority-data-kube', variable: 'certificade-authority-data-kube')]) {
+                    kubeconfig(caCertificate: 'certificade-authority-data-kube', credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.216:8090') {
+                        script {
+                            // Lauch test
+                            sh '''
+                            export PATH="${HOME}/.krew/bin:$PATH"
+                            kubectl kuttl test ./k8/test/e2e/
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+
+        /*
         stage ('Test') {
             steps {
                 withKubeConfig(caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'secret_jenkins', namespace: '', restrictKubeConfigAccess: false, serverUrl: 'https://192.168.49.2:8443') {
@@ -88,6 +107,6 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
     }
 }
