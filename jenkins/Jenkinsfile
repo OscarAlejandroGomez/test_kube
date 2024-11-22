@@ -11,6 +11,10 @@ pipeline {
 
     }
     
+    triggers {
+        githubPush()
+    }
+
     stages { 
         stage('SCM Checkout') {
             steps {
