@@ -1,0 +1,114 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = 'demo_pipe'
+        AWS_ACCOUNT_ID = '615299766065'
+        URL_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+    }
+    
+    stages { 
+        stage('SCM Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/OscarAlejandroGomez/test_kube.git'
+            }
+        }
+        
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    // Use the Docker plugin to build the Docker image
+                    def dockerImage = docker.build("${ECR_REPO}", "-f ./docker/DockerFile .")
+                    
+                    // Tag the image with the ECR URL
+                    sh "docker tag ${ECR_REPO}:latest ${URL_REGISTRY}/${ECR_REPO}:latest"
+                    
+                    // Login to ECR and push the image
+                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'ecr_user', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${URL_REGISTRY}"
+                        
+                        // Push the image with the full ECR URL
+                        sh "docker push ${URL_REGISTRY}/${ECR_REPO}:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps { 
+                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'ecr_user', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'),
+                                string(credentialsId: 'certificade-authority-data-kube', variable: 'certificade-authority-data-kube')]) {
+                    kubeconfig(caCertificate: 'certificade-authority-data-kube', credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.216:8090') {
+                        script {
+                            // Retrieve AWS ECR password
+                            def ecrPassword = sh(returnStdout: true, script: "aws ecr get-login-password --region ${AWS_REGION}").trim()
+                            
+                            // Delete existing secret if it exists
+                            sh "kubectl delete secret ecr-secret || true"
+                            
+                            // Create the secret in Kubernetes
+                            sh """
+                                kubectl create secret docker-registry ecr-secret \
+                                --docker-server=${URL_REGISTRY} \
+                                --docker-username=AWS \
+                                --docker-password=${ecrPassword} \
+                                --docker-email=none
+                            """
+                            
+                            // Deploy application to Kubernetes
+                            sh "kubectl apply -f ./k8/deployments/deployment.yaml"
+                            sh "kubectl apply -f ./k8/services/service.yaml"
+                        }
+                    }
+                }
+            }
+        }
+
+        
+        stage('Install kubectl-kuttl krew') {
+            steps {
+                script {
+                    sh '''
+                     
+                       export PATH="${HOME}/.krew/bin:$PATH"
+                       kubectl krew install kuttl
+                    '''
+                }
+            }
+        }
+
+       
+
+        stage('test into kubernetes') {
+            steps { 
+                withCredentials([string(credentialsId: 'certificade-authority-data-kube', variable: 'certificade-authority-data-kube')]) {
+                    kubeconfig(caCertificate: 'certificade-authority-data-kube', credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.216:8090') {
+                        script {
+                            // Lauch test
+                            sh '''
+                            export PATH="${HOME}/.krew/bin:$PATH"
+                            kubectl kuttl test ./k8/test/e2e/
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+
+        /*
+        stage ('Test') {
+            steps {
+                withKubeConfig(caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'secret_jenkins', namespace: '', restrictKubeConfigAccess: false, serverUrl: 'https://192.168.49.2:8443') {
+                    script {
+                        sh '''
+                           export PATH="${HOME}/.krew/bin:$PATH"
+                           kubectl kuttl test ./k8/test/e2e/
+                        '''
+                    }
+                }
+            }
+        }*/
+    }
+}

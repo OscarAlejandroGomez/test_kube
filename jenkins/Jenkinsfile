@@ -6,6 +6,9 @@ pipeline {
         ECR_REPO = 'demo_pipe'
         AWS_ACCOUNT_ID = '615299766065'
         URL_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        CLUSTER_NAME = "testDeployK8Cluster"
+        CLUSTER_ARN = "arn:aws:eks:us-east-1:615299766065:cluster/testDeployK8Cluster"
+
     }
     
     stages { 
@@ -37,41 +40,37 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps { 
-                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'ecr_user', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'),
-                                string(credentialsId: 'certificade-authority-data-kube', variable: 'certificade-authority-data-kube')]) {
-                    kubeconfig(caCertificate: 'certificade-authority-data-kube', credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.216:8090') {
-                        script {
-                            // Retrieve AWS ECR password
-                            def ecrPassword = sh(returnStdout: true, script: "aws ecr get-login-password --region ${AWS_REGION}").trim()
+                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'ecr_user', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    script {
+                        def ecrPassword = sh(returnStdout: true, script: "aws ecr get-login-password --region ${AWS_REGION}").trim()
+                        // Update kubeconfig
+                        sh "aws eks --region ${AWS_REGION} update-kubeconfig --name ${CLUSTER_NAME}"
+                        sh "kubectl delete secret ecr-secret || true"
                             
-                            // Delete existing secret if it exists
-                            sh "kubectl delete secret ecr-secret || true"
-                            
-                            // Create the secret in Kubernetes
-                            sh """
-                                kubectl create secret docker-registry ecr-secret \
-                                --docker-server=${URL_REGISTRY} \
-                                --docker-username=AWS \
-                                --docker-password=${ecrPassword} \
-                                --docker-email=none
-                            """
-                            
-                            // Deploy application to Kubernetes
-                            sh "kubectl apply -f ./k8/deployments/deployment.yaml"
-                            sh "kubectl apply -f ./k8/services/service.yaml"
-                        }
+                        // Create the secret in Kubernetes
+                        sh """
+                            kubectl create secret docker-registry ecr-secret \
+                            --docker-server=${URL_REGISTRY} \
+                            --docker-username=AWS \
+                            --docker-password=${ecrPassword} \
+                            --docker-email=none
+                        """
+                        
+                        // Deploy application to Kubernetes
+                        sh "kubectl apply -f ./k8/deployments/deployment.yaml"
+                        sh "kubectl apply -f ./k8/services/service.yaml"
                     }
                 }
             }
         }
-
         
         stage('Install kubectl-kuttl krew') {
             steps {
                 script {
-                    sh '''
-                       export PATH="${HOME}/.krew/bin:$PATH"
-                       kubectl krew install kuttl
+                    sh ''' #!/bin/bash
+                    export PATH="${HOME}/.krew/bin:$PATH"
+                    kubectl krew version
+                    kubectl krew install kuttl
                     '''
                 }
             }
@@ -80,33 +79,19 @@ pipeline {
 
         stage('test into kubernetes') {
             steps { 
-                withCredentials([string(credentialsId: 'certificade-authority-data-kube', variable: 'certificade-authority-data-kube')]) {
-                    kubeconfig(caCertificate: 'certificade-authority-data-kube', credentialsId: 'kubeconfig', serverUrl: 'http://192.168.1.216:8090') {
-                        script {
-                            // Lauch test
-                            sh '''
-                            export PATH="${HOME}/.krew/bin:$PATH"
-                            kubectl kuttl test ./k8/test/e2e/
-                            '''
-                        }
+                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'ecr_user', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    
+                    script {
+                        // Lauch test
+                        sh "aws eks --region ${AWS_REGION} update-kubeconfig --name ${CLUSTER_NAME}"
+                        sh '''
+                        export PATH="${HOME}/.krew/bin:$PATH"
+                        kubectl kuttl test ./k8/test/e2e/
+                        '''
                     }
+                
                 }
             }
         }
-
-
-        /*
-        stage ('Test') {
-            steps {
-                withKubeConfig(caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'secret_jenkins', namespace: '', restrictKubeConfigAccess: false, serverUrl: 'https://192.168.49.2:8443') {
-                    script {
-                        sh '''
-                           export PATH="${HOME}/.krew/bin:$PATH"
-                           kubectl kuttl test ./k8/test/e2e/
-                        '''
-                    }
-                }
-            }
-        }*/
     }
 }
