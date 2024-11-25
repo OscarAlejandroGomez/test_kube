@@ -42,7 +42,7 @@ export class CdkStack extends cdk.Stack {
       sudo apt-get upgrade -y
       sudo apt-get install -y openjdk-17-jdk
       curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-      echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+      echo 'deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/' | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
       sudo apt-get update -y
       sudo apt-get install -y jenkins
       sudo systemctl enable jenkins
@@ -60,24 +60,24 @@ export class CdkStack extends cdk.Stack {
 
       sudo apt update && sudo apt upgrade -y
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      echo "deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
       sudo apt update
       sudo apt install -y docker-ce docker-ce-cli containerd.io
       sudo systemctl start docker
       sudo systemctl enable docker
-      sudo usermod -aG docker $USER
+      sudo usermod -aG docker \$USER
 
       (
-        set -x; cd "$(mktemp -d)" &&
-        OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-        ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/arm.*$/arm/')" &&
-        KREW="krew-${OS}_${ARCH}" &&
-        curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
-        tar zxvf "${KREW}.tar.gz" &&
-        ./"${KREW}" install krew
+        set -x; cd "\$(mktemp -d)" &&
+        OS="\$(uname | tr '[:upper:]' '[:lower:]')" &&
+        ARCH="\$(uname -m | sed -e 's/x86_64/amd64/' -e 's/arm.*\$/arm/')" &&
+        KREW="krew-\${OS}_\${ARCH}" &&
+        curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/\${KREW}.tar.gz" &&
+        tar zxvf "\${KREW}.tar.gz" &&
+        ./\${KREW} install krew
       )
 
-      export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+      export PATH="\${KREW_ROOT:-\$HOME/.krew}/bin:\$PATH"
     `;
 
     const userData = UserData.forLinux();
